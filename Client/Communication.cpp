@@ -4,15 +4,6 @@
 #include "Communication.h"
 #include <stdlib.h>
 
-void safe_close_handle(HANDLE a)
-{
-	if (a)
-	{
-		CloseHandle(a);
-	}
-}
-
-
 extern HANDLE FinishSignal;
 extern CRITICAL_SECTION console_section;
 
