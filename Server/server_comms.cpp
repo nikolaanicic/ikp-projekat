@@ -111,6 +111,12 @@ DWORD WINAPI load_balancer(LPVOID lpParam)
 {
 	SOCKET accepted_connections[MAX_CONNECTIONS];
 
+	// napraviti server tako da serveri imaju boot up sekvencu
+	// odnosno kada se pokrecu, proverava se postojanje drugog servera
+	// uspostave se veze izmedju servera ako su obojica online
+	// odnosno povezu se load balanceri i ostave te konekcije aktivnim da 
+	// bi thread poolovi mogli da gadjaju load balancer sa suprotnog servisa
+	
 
 	return 0;
 }

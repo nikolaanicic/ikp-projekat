@@ -2,6 +2,7 @@
 #define _WINSOCK_HELPERS
 
 #include <WinSock2.h>
+#include <stdio.h>
 
 void print_last_winsock_error();
 void init_winsock(WORD);

@@ -141,8 +141,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="queue.h" />
     <ClInclude Include="server_comms.h" />
-    <ClInclude Include="server_data_model.h" />
+    <ClInclude Include="client_hash_array.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.vcxproj">
@@ -150,6 +151,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="queue.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="server_comms.cpp" />
   </ItemGroup>

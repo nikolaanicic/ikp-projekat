@@ -4,6 +4,7 @@
 
 SOCKET client;
 HANDLE FinishSignal;
+CRITICAL_SECTION console_section;
 
 char get_type_input()
 {
@@ -40,19 +41,12 @@ int main()
 		return 1;
 	}
 
-
-	FinishSignal = CreateSemaphore(NULL, 0, 2, NULL);
-
-	if (!FinishSignal)
-	{
-		printf("\nFailed to initialize Finish signal semaphore");
-		handle_init_error_handler();
-	}
-
+	InitializeCriticalSection(&console_section);
+	FinishSignal = init_semaphore(0, 2);
 
 
 	sending_thread = CreateThread(NULL, 0, &RunSendingThread, (LPVOID)&type, 0, &sending_thread_id);
-	receiving_thread = CreateThread(NULL, 0, &RunAcceptingThread, (LPVOID)NULL, 0, &sending_thread_id);
+	receiving_thread = CreateThread(NULL, 0, &RunAcceptingThread, (LPVOID)NULL, 0, &receiving_thread_id);
 
 
 	if (!sending_thread || !receiving_thread)
@@ -69,10 +63,10 @@ int main()
 	WaitForSingleObject(receiving_thread, INFINITE);
 
 
-
 	safe_close_handle(FinishSignal);
 	safe_close_handle(sending_thread);
 	safe_close_handle(receiving_thread);
+	DeleteCriticalSection(&console_section);
 
 	close_socket(client);
 

@@ -13,123 +13,8 @@ void safe_close_handle(HANDLE a)
 }
 
 
-#pragma region RANDOM_DATA
-#define RAND_BUFFER_SIZE (8)
-
-
-char* generateRandomData()
-{
-	int l = rand();
-	int r = rand();
-
-	char* buffer = allocate_buffer(RAND_BUFFER_SIZE);
-
-	memcpy(buffer, &l, sizeof(int));
-	memcpy(&(buffer[1]), &r, sizeof(int));
-
-	return buffer;
-}
-
-
-void free_void_buffer(void* buffer)
-{
-	if (buffer != NULL)
-	{
-		free(buffer);
-		buffer = NULL;
-	}
-}
-
-int get_random_int(char* buffer)
-{
-	return ((int*)buffer)[rand() % (RAND_BUFFER_SIZE / sizeof(int))];
-}
-
-char get_random_char(char* buffer)
-{
-	return buffer[rand() % RAND_BUFFER_SIZE];
-}
-
-short get_random_short(char* buffer)
-{
-	return ((short*)buffer)[rand() % (RAND_BUFFER_SIZE / sizeof(short))];
-}
-
-float get_random_float(char* buffer)
-{
-	return ((float*)buffer)[rand() % (RAND_BUFFER_SIZE / sizeof(float))];
-}
-
-double get_random_double(char* buffer)
-{
-	return *((double*)buffer);
-}
-
-
-void* allocate_void_buffer(int size)
-{
-	void* buffer = malloc(size);
-
-	if (buffer == NULL)
-	{
-		printf("\nFailed to allocate buffer");
-	}
-
-	return buffer;
-}
-
-void* get_random_data(char type)
-{
-	char* random_buffer = generateRandomData();
-	void* data_buffer = NULL;
-	switch (type)
-	{
-	case 'c':
-	{
-		data_buffer = allocate_void_buffer(sizeof(char));
-		char c = get_random_char(random_buffer);
-		memcpy(data_buffer, &c, sizeof(char));
-		break;
-	}
-	case 'i':
-	{
-		data_buffer = allocate_void_buffer(sizeof(int));
-		int i = get_random_int(random_buffer);
-		memcpy(data_buffer, &i, sizeof(int));
-		break;
-	}
-	case 's':
-	{
-		data_buffer = allocate_void_buffer(sizeof(short));
-		short s = get_random_short(random_buffer);
-		memcpy(data_buffer, &s, sizeof(short));
-		break;
-	}
-	case 'f':
-	{
-		data_buffer = allocate_void_buffer(sizeof(float));
-		float f = get_random_float(random_buffer);
-		memcpy(data_buffer, &f, sizeof(float));
-		break;
-	}
-	case 'd':
-	{
-		data_buffer = allocate_void_buffer(sizeof(double));
-		double d = get_random_float(random_buffer);
-		memcpy(data_buffer, &d, sizeof(double));
-		break;
-	}
-	}
-
-	free_buffer(random_buffer);
-	return data_buffer;
-}
-
-#pragma endregion
-
-
 extern HANDLE FinishSignal;
-
+extern CRITICAL_SECTION console_section;
 
 #pragma region INTERFACE
 
@@ -137,6 +22,7 @@ extern SOCKET client;
 
 void handle_client_connect_error()
 {
+
 	print_last_winsock_error();
 	close_winsock();
 	exit(-5);
@@ -241,7 +127,9 @@ DWORD WINAPI RunAcceptingThread(LPVOID lpParam)
 	while (WaitForSingleObject(FinishSignal,1000) != WAIT_OBJECT_0)
 	{
 		MESSAGE_STATE state = receive_message_tcp(client, message);
+		EnterCriticalSection(&console_section);
 		print_message(*message);
+		LeaveCriticalSection(&console_section);
 	
 	}
 
@@ -253,9 +141,7 @@ DWORD WINAPI RunAcceptingThread(LPVOID lpParam)
 
 DWORD WINAPI RunSendingThread(LPVOID lpParam)
 {
-	
 	TYPE type = *(TYPE*)lpParam;
-
 
 	MESSAGE* message = allocate_message();
 	
@@ -276,7 +162,10 @@ DWORD WINAPI RunSendingThread(LPVOID lpParam)
 		}
 		else
 		{
+			EnterCriticalSection(&console_section);
 			printf("\nSUCCESSFULLY SENT DATA MESSAGE");
+			print_message(*message);
+			EnterCriticalSection(&console_section);
 		}
 
 		free_void_buffer(random_data);

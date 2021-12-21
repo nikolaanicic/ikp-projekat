@@ -1,11 +1,10 @@
 #ifndef _SERVER_COMMS_H
 #define _SERVER_COMMS_H
 
-#include "framework.h"
+#include "client_hash_array.h"
+#include "winsock_helpers.h"
 #include <stdio.h>
 #include <Windows.h>
-#include "server_data_model.h"
-#include "server_data_model.h"
 
 
 DWORD WINAPI load_balancer(LPVOID lpParam);

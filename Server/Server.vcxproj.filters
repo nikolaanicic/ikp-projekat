@@ -18,7 +18,10 @@
     <ClInclude Include="server_comms.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="server_data_model.h">
+    <ClInclude Include="client_hash_array.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="queue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -27,6 +30,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="server_comms.cpp">
+      <Filter>Resource Files</Filter>
+    </ClCompile>
+    <ClCompile Include="queue.cpp">
       <Filter>Resource Files</Filter>
     </ClCompile>
   </ItemGroup>

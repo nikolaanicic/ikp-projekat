@@ -143,10 +143,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Communication.h" />
+    <ClInclude Include="random_data.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Communication.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="random_data.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.vcxproj">

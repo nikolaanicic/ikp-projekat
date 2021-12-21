@@ -8,6 +8,7 @@
 #define PCH_H
 
 // add headers that you want to pre-compile here
-#include "framework.h"
-
+#include "data_model.h"
+#include "high_level_connection.h"
+#include "winsock_helpers.h"
 #endif //PCH_H
