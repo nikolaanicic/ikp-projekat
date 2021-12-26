@@ -21,3 +21,8 @@ void safe_close_handle(HANDLE handle)
 		CloseHandle(handle);
 	}
 }
+
+HANDLE init_mutex()
+{
+	return CreateMutex(NULL, false, NULL);
+}

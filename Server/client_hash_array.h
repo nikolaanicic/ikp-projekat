@@ -8,14 +8,13 @@
 typedef struct _hash_array_node_
 {
 	SOCKET socket;
-	SOCKADDR_IN client_address;
 }HASH_NODE;
 
 #define HASH_ARRAY_LEN (7)
 
-
-int map_type_to_index(TYPE type);
-void init_hash_array();
+void init_hash_array(HASH_NODE client_array[]);
+void set_hash_node(TYPE type, HASH_NODE node,HASH_NODE client_array[]);
+HASH_NODE get_hash_node(TYPE type,HASH_NODE client_array[]);
 
 
 //tipovi su mapirani na osnovu ostatka deljenja sa 7
@@ -40,9 +39,5 @@ void init_hash_array();
 // DOUBLE	|		2		|
 // FLOAT	|		4		|
 // SHORT	|		6		|
-
-
-
-
 
 #endif

@@ -10,7 +10,8 @@
 enum TYPE { _CHAR_ = 99, _DOUBLE_ = 100, _FLOAT_ = 102, _SHORT_ = 104, _INT_ = 105 };
 enum COMMAND { _CONNECT_ = 1, _DOES_EXIST_ = 2, _MESSAGE_ = 3, _EXISTS_ = 4, _NOT_EXISTS_ = 5 };
 enum LOCATION { _SERVER_ = 1, _CLIENT_ = 2 };
-enum MESSAGE_STATE { SUCCESS = 0, FAULT = 1 };
+enum MESSAGE_STATE { SUCCESS = 0, FAULT = 1,DISCONNECT = 2 };
+enum FILLED_STRUCTURE {_DATA_ = 0, _CONFIG_ = 1};
 
 
 //recnik komadni
@@ -56,7 +57,7 @@ typedef struct _message_
 {
 	LOCATION destination;
 	LOCATION origin;
-	char has_data;
+	FILLED_STRUCTURE has_data;
 	char queueName[7];
 	INNER_MESSAGE data;
 }MESSAGE;

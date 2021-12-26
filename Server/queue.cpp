@@ -8,27 +8,8 @@ void init_queue(Node** head)
 	*head = NULL;
 }
 
-void push_back(Node** head, Node* new_node)
-{
-	if (new_node == NULL)
-		return;
-	else if (*head == NULL)
-	{
-		*head = new_node;
-		return;
-	}
 
-	Node* tmp = *head;
-
-	while ((*head)->next != NULL)
-	{
-		(*head) = (*head)->next;
-	}
-
-	(*head)->next = new_node;
-	*head = tmp;
-}
-void push_front(Node** head, Node* new_node)
+void push(Node** head, Node* new_node)
 {
 	if (new_node == NULL)
 	{
@@ -53,23 +34,8 @@ void free_node(Node** node)
 	*node = NULL;
 }
 
-Node pop_front(Node** head)
-{
-	if (*head == NULL)
-		return Node();
 
-	Node* to_free = *head;
-	Node retval = *to_free;
-	(*head) = (*head)->next;
-
-	free(to_free);
-	to_free = NULL;
-
-	return retval;
-
-}
-
-Node pop_back(Node** head) 
+Node pop(Node** head) 
 {
 	if (*head == NULL)
 		return Node();
@@ -89,7 +55,6 @@ Node pop_back(Node** head)
 
 
 	return retval;
-
 }
 
 

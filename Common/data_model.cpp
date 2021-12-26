@@ -71,12 +71,12 @@ void print_config_message(CONFIG_MESSAGE message)
 	print_command(message.command);
 }
 
-void print_inner_message(INNER_MESSAGE message, char has_data)
+void print_inner_message(INNER_MESSAGE message, FILLED_STRUCTURE has_data)
 {
 	switch (has_data)
 	{
-	case 'c': print_config_message(message.config); break;
-	case 'd': print_data_message(message.data); break;
+		case _CONFIG_: print_config_message(message.config); break;
+		case _DATA_: print_data_message(message.data); break;
 	}
 }
 
@@ -230,19 +230,19 @@ bool populate_data_message(DATA_MESSAGE* message, TYPE type, void* data)
 	return retval;
 }
 
-bool populate_inner_message(INNER_MESSAGE* message, void* data, char has_data)
+bool populate_inner_message(INNER_MESSAGE* message, void* data, FILLED_STRUCTURE has_data)
 {
 	if (message == NULL || data == NULL)
 		return false;
 
 	switch (has_data)
 	{
-	case 'c':
+	case _CONFIG_:
 	{
 		memcpy(&(message->config), data, sizeof(CONFIG_MESSAGE));
 		break;
 	}
-	case 'd':
+	case _DATA_:
 	{
 		memcpy(&(message->data), data, sizeof(DATA_MESSAGE));
 		break;
@@ -266,10 +266,10 @@ MESSAGE* make_message_data(void* data, TYPE type)
 
 	DATA_MESSAGE data_message;
 	populate_data_message(&data_message, type, data);
-	populate_inner_message(&(message->data), (void*)&data_message, 'd');
+	populate_inner_message(&(message->data), (void*)&data_message, _DATA_);
 
 	message->destination = _CLIENT_;
-	message->has_data = 'd';
+	message->has_data = _DATA_;
 	message->origin = _CLIENT_;
 
 
@@ -283,9 +283,9 @@ MESSAGE* make_message_config(TYPE queueName, COMMAND command, LOCATION origin, L
 	MESSAGE* message = allocate_message();
 	CONFIG_MESSAGE config_message;
 	populate_config_message(&config_message, command);
-	populate_inner_message(&(message->data), (void*)(&config_message), 'c');
+	populate_inner_message(&(message->data), (void*)(&config_message), _CONFIG_);
 
-	message->has_data = 'c';
+	message->has_data = _CONFIG_;
 	message->destination = destination;
 	message->origin = origin;
 

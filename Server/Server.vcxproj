@@ -142,8 +142,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="queue.h" />
+    <ClInclude Include="server_common.h" />
     <ClInclude Include="server_comms.h" />
     <ClInclude Include="client_hash_array.h" />
+    <ClInclude Include="server_config.h" />
+    <ClInclude Include="server_main_thread.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.vcxproj">
@@ -151,9 +154,13 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="client_hash_array.cpp" />
     <ClCompile Include="queue.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="server_common.cpp" />
     <ClCompile Include="server_comms.cpp" />
+    <ClCompile Include="server_config.cpp" />
+    <ClCompile Include="server_main_thread.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

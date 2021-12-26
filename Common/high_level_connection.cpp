@@ -59,14 +59,19 @@ MESSAGE_STATE receive_message_tcp(SOCKET s, MESSAGE* message)
 			retval = SUCCESS;
 		}
 	}
-	else if (iRes == 0 || iRes == SOCKET_ERROR)
+	else if (iRes == SOCKET_ERROR)
 	{
-		if (iRes == 0)
-			printf("\nConnection closed");
-
 		close_socket(s);
 		retval = FAULT;
 	}
+	else if (iRes == 0)
+	{
+		printf("\nConnection closed");
+		close_socket(s);
+		retval = DISCONNECT;
+	}
+
+	free(recv_buffer);
 
 	return retval;
 }

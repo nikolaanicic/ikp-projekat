@@ -24,7 +24,7 @@ SOCKET Connect(const char* queueName)
 	SOCKET client = init_socket();
 	SOCKADDR_IN server_address;
 
-	populateAddressV4(&server_address, SERVER_IP, SERVER_PORT);
+	populateAddressV4(&server_address, SERVER_IP, SERVER_PORT_1);
 	connect_to_address(client, server_address, &handle_client_connect_error);
 
 
@@ -42,7 +42,7 @@ SOCKET Connect(const char* queueName)
 		return SOCKET_ERROR;
 	}
 
-	char buffer[BUFFER_SIZE];
+	printf("\nSENT CONFIG CONNECT MESSAGE AWAITING RESPONSE");
 
 	state = receive_message_tcp(client, message);
 

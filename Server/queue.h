@@ -11,7 +11,7 @@ typedef struct _queue_node_
 
 
 void push(Node** head, Node* new_node);
-void pop(Node** head, Node* new_node);
+Node pop(Node** head);
 void print_queue(Node* head);
 void free_queue(Node** head);
 void init_queue(Node** head);
