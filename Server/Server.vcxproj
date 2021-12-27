@@ -141,6 +141,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="main_server_queue_worker.h" />
     <ClInclude Include="queue.h" />
     <ClInclude Include="server_common.h" />
     <ClInclude Include="server_comms.h" />
@@ -155,6 +156,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="client_hash_array.cpp" />
+    <ClCompile Include="main_server_queue_worker.cpp" />
     <ClCompile Include="queue.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="server_common.cpp" />
