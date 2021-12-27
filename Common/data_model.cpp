@@ -273,7 +273,7 @@ MESSAGE* make_message_data(void* data, TYPE type)
 	message->origin = _CLIENT_;
 
 
-	strcpy(message->queueName, map_type_to_queue_name(type));
+	strcpy_s(message->queueName, map_type_to_queue_name(type));
 	return message;
 }
 

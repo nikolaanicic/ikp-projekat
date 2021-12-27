@@ -22,7 +22,7 @@ void push(Node** head, Node* new_node)
 	}
 
 	new_node->next = (*head);
-	(*head)->next = new_node;
+	(*head) = new_node;
 }
 
 void free_node(Node** node)
@@ -84,7 +84,7 @@ void free_queue(Node** head)
 	if (*head == NULL)
 		return;
 
-	while (*head)
+	while (*head != NULL)
 	{
 		Node* next = (*head)->next;
 		free(*head);

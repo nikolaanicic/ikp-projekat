@@ -6,6 +6,7 @@
 
 extern HANDLE FinishSignal;
 extern CRITICAL_SECTION console_section;
+extern HANDLE socket_mutex;
 
 #pragma region INTERFACE
 
@@ -109,15 +110,34 @@ bool Send_Message(void* message, TYPE type)
 }
 
 
+void stop_client()
+{
+	if (client != INVALID_SOCKET)
+		close_socket(client);
+}
+
 
 DWORD WINAPI RunAcceptingThread(LPVOID lpParam)
 {
 	MESSAGE* message = allocate_message();
 	printf("\nStarted client accepting thread");
-
+	MESSAGE_STATE state = FAULT;
 	while (WaitForSingleObject(FinishSignal,1000) != WAIT_OBJECT_0)
 	{
-		MESSAGE_STATE state = receive_message_tcp(client, message);
+		while (WaitForSingleObject(socket_mutex, INFINITE) != WAIT_OBJECT_0);
+		if(client != INVALID_SOCKET)
+			state = receive_message_tcp(client, message);
+		if (state == DISCONNECT)
+		{
+			free_message(message);
+			stop_client();
+			ReleaseSemaphore(FinishSignal, 1, NULL);
+			ReleaseMutex(socket_mutex);
+			
+			return 0;
+		}
+		ReleaseMutex(socket_mutex);
+
 		EnterCriticalSection(&console_section);
 		print_message(*message);
 		LeaveCriticalSection(&console_section);
@@ -135,7 +155,7 @@ DWORD WINAPI RunSendingThread(LPVOID lpParam)
 	TYPE type = *(TYPE*)lpParam;
 
 	MESSAGE* message = allocate_message();
-	
+	MESSAGE_STATE state = FAULT;
 	printf("\nStarted client sending thread");
 	while (WaitForSingleObject(FinishSignal, 5000) != WAIT_OBJECT_0)
 	{
@@ -144,8 +164,19 @@ DWORD WINAPI RunSendingThread(LPVOID lpParam)
 
 		message = make_message_data(random_data, type);
 
-		MESSAGE_STATE state = send_message_tcp(client, *message);
+		while (WaitForSingleObject(socket_mutex,INFINITE) != WAIT_OBJECT_0);
+		
+		if(client != INVALID_SOCKET)
+			state = send_message_tcp(client, *message);
+		else
+		{
+			free_void_buffer(random_data);
+			free_message(message);
+			ReleaseMutex(socket_mutex);
+			return 0;
+		}
 
+		ReleaseMutex(socket_mutex);
 		if (state == FAULT)
 		{
 			printf("\nFailed to send DATA MESSAGE");
@@ -167,8 +198,6 @@ DWORD WINAPI RunSendingThread(LPVOID lpParam)
 
 	return 0;
 }
-
-
 
 #pragma endregion
 

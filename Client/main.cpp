@@ -5,6 +5,7 @@
 SOCKET client;
 HANDLE FinishSignal;
 CRITICAL_SECTION console_section;
+HANDLE socket_mutex;
 
 char get_type_input()
 {
@@ -12,6 +13,7 @@ char get_type_input()
 
 	do 
 	{
+		printf("\ni-INT c-CHAR f-FLOAT d-DOUBLE h-SHORT");
 		printf("\nUnesite zeljeni tip klijenta:");
 		scanf_s("%c", &c);
 	} while (c != 'i' && c != 'c' && c != 'f' && c != 'd' && c != 'h');
@@ -29,8 +31,9 @@ int main()
 	HANDLE receiving_thread;
 
 	char type = get_type_input();
-
 	const char* queueName = map_type_to_queue_name((TYPE)type);
+	TYPE data_type = map_queue_name_to_type(queueName);
+
 
 	init_winsock(MAKEWORD(2, 2));
 	
@@ -43,9 +46,9 @@ int main()
 
 	InitializeCriticalSection(&console_section);
 	FinishSignal = init_semaphore(0, 2);
+	socket_mutex = init_mutex();
 
-
-	sending_thread = CreateThread(NULL, 0, &RunSendingThread, (LPVOID)&type, 0, &sending_thread_id);
+	sending_thread = CreateThread(NULL, 0, &RunSendingThread, (LPVOID)&data_type, 0, &sending_thread_id);
 	receiving_thread = CreateThread(NULL, 0, &RunAcceptingThread, (LPVOID)NULL, 0, &receiving_thread_id);
 
 
@@ -55,13 +58,10 @@ int main()
 		handle_init_error_handler();
 	}
 
+	printf("\nPress [Enter] to stop the client:");
 	_getch();
 
 	ReleaseSemaphore(FinishSignal, 2, NULL);
-		
-	WaitForSingleObject(sending_thread,INFINITE);
-	WaitForSingleObject(receiving_thread, INFINITE);
-
 
 	safe_close_handle(FinishSignal);
 	safe_close_handle(sending_thread);

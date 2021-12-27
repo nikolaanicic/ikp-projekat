@@ -15,6 +15,7 @@ typedef struct _hash_array_node_
 void init_hash_array(HASH_NODE client_array[]);
 void set_hash_node(TYPE type, HASH_NODE node,HASH_NODE client_array[]);
 HASH_NODE get_hash_node(TYPE type,HASH_NODE client_array[]);
+int map_type_to_index(TYPE type);
 
 
 //tipovi su mapirani na osnovu ostatka deljenja sa 7

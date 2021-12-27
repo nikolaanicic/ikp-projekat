@@ -67,8 +67,9 @@ bool try_connect_client_to_queue(MESSAGE* message,SOCKET socket)
 {
 	bool retval = false;
 	TYPE type = map_queue_name_to_type(message->queueName);
+	int mutex_index = map_type_to_index(type);
 
-	while (WaitForSingleObject(client_hash_array_mutex, INFINITE) != WAIT_OBJECT_0);
+	while (WaitForSingleObject(client_hash_array_mutex[mutex_index], INFINITE) != WAIT_OBJECT_0);
 
 	HASH_NODE node = get_hash_node(type, client_hash_array);
 
@@ -84,23 +85,38 @@ bool try_connect_client_to_queue(MESSAGE* message,SOCKET socket)
 		printf("\nClient connection rejected to queue:%s", message->queueName);
 	}
 
-	ReleaseMutex(client_hash_array_mutex);
+	ReleaseMutex(client_hash_array_mutex[mutex_index]);
 	return retval;
 
 }
 
+void respond_client_connected(SOCKET* client, MESSAGE* message)
+{
+	MESSAGE_STATE state = send_message_tcp(*client, *message);
+
+	if (state == FAULT)
+	{
+		printf("\nFailed to connect client");
+		close_socket(*client);
+		*client = INVALID_SOCKET;
+	}
+	else if(state == SUCCESS)
+	{
+		printf("\nClient is connected to queue:%s",message->queueName);
+	}
+}
 
 void disconnect_client_from_queue(MESSAGE* message)
 {
 	TYPE type = map_queue_name_to_type(message->queueName);
-
-	while (WaitForSingleObject(client_hash_array_mutex, INFINITE) != WAIT_OBJECT_0);
+	int mutex_index = map_type_to_index(type);
+	while (WaitForSingleObject(client_hash_array_mutex[mutex_index], INFINITE) != WAIT_OBJECT_0);
 
 	HASH_NODE node = get_hash_node(type, client_hash_array);
 	node.socket = INVALID_SOCKET;
 	set_hash_node(type, node, client_hash_array);
 
-	ReleaseMutex(client_hash_array_mutex);
+	ReleaseMutex(client_hash_array_mutex[mutex_index]);
 }
 
 void push_message_to_server_queue(MESSAGE* message)
@@ -110,14 +126,17 @@ void push_message_to_server_queue(MESSAGE* message)
 	ReleaseMutex(server_queue_mutex);
 }
 
-void schedule_message(MESSAGE* message,SOCKET client_socket)
+void schedule_message(MESSAGE* message,SOCKET*client_socket)
 {
 	if (is_connect_message(message))
 	{
-		try_connect_client_to_queue(message, client_socket);
+		try_connect_client_to_queue(message, *client_socket);
+		respond_client_connected(client_socket, message);
 	}
-
-	push_message_to_server_queue(message);
+	else
+	{
+		push_message_to_server_queue(message);
+	}
 }
 
 
@@ -132,7 +151,7 @@ void check_client_sockets_events(SOCKET accepted_connections[],FD_SET* fds,MESSA
 			
 			if (state == SUCCESS)
 			{
-				schedule_message(buffer, accepted_connections[i]);
+				schedule_message(buffer, &accepted_connections[i]);
 			}
 			else if(state == FAULT)
 			{
@@ -196,33 +215,4 @@ DWORD WINAPI load_balancer(LPVOID lpParam)
 
 	free_message(message);
 	return 0;
-}
-
-MAIN_THREAD_VARS* init_main_thread_vars(SOCKET listen_socket, HANDLE FinishSignal, HANDLE MainServerQueueSemaphore, HANDLE ConnectedClientsArraySempahore, Node* main_server_queue, HASH_NODE* client_hash_array)
-{
-	MAIN_THREAD_VARS* vars = (MAIN_THREAD_VARS*)malloc(sizeof(MAIN_THREAD_VARS));
-
-	if (vars == NULL)
-	{
-		printf("\nFailed to allocate main server thread data model");
-		return NULL;
-	}
-
-	vars->listen_socket = listen_socket;
-	vars->FinishSignal = FinishSignal;
-	vars->MainServerQueueSemaphore = MainServerQueueSemaphore;
-	vars->client_array_mutex = ConnectedClientsArraySempahore;
-	vars->main_server_queue_head = main_server_queue;
-	vars->client_hash_array = client_hash_array;
-	
-	return vars;
-}
-
-void free_main_thread_vars(MAIN_THREAD_VARS* main_thread_vars)
-{
-	if (main_thread_vars != NULL)
-	{
-		free(main_thread_vars);
-		main_thread_vars = NULL;
-	}
 }

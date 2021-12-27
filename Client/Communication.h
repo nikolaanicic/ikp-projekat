@@ -19,7 +19,7 @@ DWORD WINAPI RunSendingThread(LPVOID lpParam);
 
 
 void handle_init_error_handler();
-
+void stop_client();
 
 #endif
 
