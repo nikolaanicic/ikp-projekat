@@ -29,7 +29,6 @@ MESSAGE_STATE send_message_tcp(SOCKET socket, MESSAGE message)
 	else if (iRes == SOCKET_ERROR)
 	{
 		printf("\nMESSAGE NOT SENT");
-		print_last_winsock_error();
 		retval = FAULT;
 	}
 
@@ -42,9 +41,8 @@ MESSAGE_STATE receive_message_tcp(SOCKET s, MESSAGE* message)
 {
 	MESSAGE_STATE retval = FAULT;
 
-	if (message == NULL)
+	if (message == NULL || s == INVALID_SOCKET)
 		return retval;
-
 
 	char* recv_buffer = allocate_buffer(sizeof(MESSAGE));
 

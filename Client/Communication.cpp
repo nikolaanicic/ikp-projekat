@@ -124,19 +124,17 @@ DWORD WINAPI RunAcceptingThread(LPVOID lpParam)
 	MESSAGE_STATE state = FAULT;
 	while (WaitForSingleObject(FinishSignal,1000) != WAIT_OBJECT_0)
 	{
-		while (WaitForSingleObject(socket_mutex, INFINITE) != WAIT_OBJECT_0);
-		if(client != INVALID_SOCKET)
-			state = receive_message_tcp(client, message);
-		if (state == DISCONNECT)
+		state = receive_message_tcp(client, message);
+		if (state == DISCONNECT || state == FAULT)
 		{
 			free_message(message);
+			while (WaitForSingleObject(socket_mutex, INFINITE) != WAIT_OBJECT_0);
 			stop_client();
-			ReleaseSemaphore(FinishSignal, 1, NULL);
+			ReleaseSemaphore(FinishSignal, 2, NULL);
 			ReleaseMutex(socket_mutex);
 			
 			return 0;
 		}
-		ReleaseMutex(socket_mutex);
 
 		EnterCriticalSection(&console_section);
 		print_message(*message);
@@ -157,41 +155,28 @@ DWORD WINAPI RunSendingThread(LPVOID lpParam)
 	MESSAGE* message = allocate_message();
 	MESSAGE_STATE state = FAULT;
 	printf("\nStarted client sending thread");
+	
 	while (WaitForSingleObject(FinishSignal, 5000) != WAIT_OBJECT_0)
 	{
-	
 		void* random_data = get_random_data(type);
-
 		message = make_message_data(random_data, type);
 
-		while (WaitForSingleObject(socket_mutex,INFINITE) != WAIT_OBJECT_0);
+		while (WaitForSingleObject(socket_mutex, INFINITE) != WAIT_OBJECT_0);
 		
-		if(client != INVALID_SOCKET)
-			state = send_message_tcp(client, *message);
-		else
+		state = send_message_tcp(client, *message);
+
+		if (state == FAULT)
 		{
+			ReleaseMutex(socket_mutex);
+			ReleaseSemaphore(FinishSignal, 1, NULL);
 			free_void_buffer(random_data);
 			free_message(message);
-			ReleaseMutex(socket_mutex);
+			
 			return 0;
 		}
 
 		ReleaseMutex(socket_mutex);
-		if (state == FAULT)
-		{
-			printf("\nFailed to send DATA MESSAGE");
-
-		}
-		else
-		{
-			EnterCriticalSection(&console_section);
-			printf("\nSUCCESSFULLY SENT DATA MESSAGE");
-			print_message(*message);
-			EnterCriticalSection(&console_section);
-		}
-
 		free_void_buffer(random_data);
-
 	}
 
 	free_message(message);

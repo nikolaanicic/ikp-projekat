@@ -68,8 +68,7 @@ int main()
 	safe_close_handle(receiving_thread);
 	DeleteCriticalSection(&console_section);
 
-	close_socket(client);
-
+	stop_client();
 	close_winsock();
 
 	return 0;
