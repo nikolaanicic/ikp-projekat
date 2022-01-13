@@ -47,7 +47,7 @@ bool is_exists(MESSAGE data)
 */
 bool is_data(MESSAGE data)
 {
-	return data.has_data == _MESSAGE_;
+	return data.has_data == _DATA_;
 }
 
 
@@ -125,11 +125,14 @@ void send_message_to_client(MESSAGE* message, TYPE type)
 
 	while (WaitForSingleObject(client_hash_array[index].client_mutex, INFINITE) != WAIT_OBJECT_0);
 
+	MESSAGE_STATE state = FAULT;
 	if (client_hash_array[index].socket != INVALID_SOCKET)
 	{
 		send_message_tcp(client_hash_array[index].socket,*message);
 	}
+
 	ReleaseMutex(client_hash_array[index].client_mutex);
+
 }
 
 void connect_error_handler()
@@ -167,9 +170,7 @@ DWORD WINAPI request_worker(LPVOID lpParam)
 	{
 		while ((wait_retval = WaitForMultipleObjects(2, semaphores, FALSE, INFINITE)) == WAIT_OBJECT_0 + 1)
 		{
-
 			Node node = pop(head);
-			ReleaseSemaphore(client_hash_array[client_index].EmptySemaphore, 1, NULL);
 
 			MESSAGE message = node.data;
 			tuple origin_destination = parse_output_location(&message);
@@ -184,8 +185,23 @@ DWORD WINAPI request_worker(LPVOID lpParam)
 			}
 			else if (origin_destination == _SERVER_CLIENT_)
 			{
-				send_message_to_client(&message, type);
+				int index = map_type_to_index(type);
+
+				while (WaitForSingleObject(client_hash_array[index].client_mutex, INFINITE) != WAIT_OBJECT_0);
+
+				MESSAGE_STATE state = FAULT;
+				if (client_hash_array[index].socket != INVALID_SOCKET)
+				{
+					send_message_tcp(client_hash_array[index].socket, message);
+				}
+				else
+				{
+					push(head, get_new_node(&message));
+				}
+
+				ReleaseMutex(client_hash_array[index].client_mutex);
 			}
+			ReleaseSemaphore(client_hash_array[client_index].EmptySemaphore, 1, NULL);
 
 			wait_retval = ~(WAIT_OBJECT_0 + 1);
 			break;
