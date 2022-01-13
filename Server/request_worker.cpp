@@ -185,21 +185,7 @@ DWORD WINAPI request_worker(LPVOID lpParam)
 			}
 			else if (origin_destination == _SERVER_CLIENT_)
 			{
-				int index = map_type_to_index(type);
-
-				while (WaitForSingleObject(client_hash_array[index].client_mutex, INFINITE) != WAIT_OBJECT_0);
-
-				MESSAGE_STATE state = FAULT;
-				if (client_hash_array[index].socket != INVALID_SOCKET)
-				{
-					send_message_tcp(client_hash_array[index].socket, message);
-				}
-				else
-				{
-					push(head, get_new_node(&message));
-				}
-
-				ReleaseMutex(client_hash_array[index].client_mutex);
+				send_message_to_client(&message, type);
 			}
 			ReleaseSemaphore(client_hash_array[client_index].EmptySemaphore, 1, NULL);
 
