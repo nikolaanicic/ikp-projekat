@@ -177,7 +177,12 @@ DWORD WINAPI request_worker(LPVOID lpParam)
 
 			if (origin_destination == _CLIENT_SERVER_)
 			{
-				send_message_tcp(brother_socket, message);
+				MESSAGE_STATE state = send_message_tcp(brother_socket, message);
+				if (state == FAULT)
+				{
+					push(head, get_new_node(&message));
+				}
+			
 			}
 			else if (origin_destination == _SERVER_SERVER_)
 			{
