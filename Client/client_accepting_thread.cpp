@@ -23,7 +23,6 @@ DWORD WINAPI RunAcceptingThread(LPVOID lpParam)
 
 			return 0;
 		}
-
 		EnterCriticalSection(&console_section);
 		print_message(*message);
 		LeaveCriticalSection(&console_section);
