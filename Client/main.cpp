@@ -1,11 +1,8 @@
-#include "Communication.h"
+#include "common.h"
 #include <stdio.h>
 #include <conio.h>
+#include "client_config.h"
 
-SOCKET client;
-HANDLE FinishSignal;
-CRITICAL_SECTION console_section;
-HANDLE socket_mutex;
 
 char get_type_input()
 {
@@ -48,6 +45,8 @@ int main()
 	FinishSignal = init_semaphore(0, 2);
 	socket_mutex = init_not_owned_mutex();
 
+	mode = get_work_mode();
+
 	sending_thread = CreateThread(NULL, 0, &RunSendingThread, (LPVOID)&data_type, 0, &sending_thread_id);
 	receiving_thread = CreateThread(NULL, 0, &RunAcceptingThread, (LPVOID)NULL, 0, &receiving_thread_id);
 
@@ -58,8 +57,14 @@ int main()
 		handle_init_error_handler();
 	}
 
-	printf("\nPress [Enter] to stop the client:");
-	while (WaitForSingleObject(FinishSignal, INFINITE) != WAIT_OBJECT_0);
+	if (mode == _MENU_) {
+		while (WaitForSingleObject(FinishSignal, INFINITE) != WAIT_OBJECT_0);
+	}
+	else if (mode == _STRESS_TEST_)
+	{
+		printf("\nPress [Enter] to stop the client:");
+		_getch();
+	}
 
 	ReleaseSemaphore(FinishSignal, 2, NULL);
 

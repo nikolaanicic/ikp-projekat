@@ -12,6 +12,14 @@
 
 #define SERVER_IP "127.0.0.1"
 #define BUFFER_SIZE (512)
+#define STRESS_TEST_PERIOD (10)
+
+
+extern HANDLE FinishSignal;
+extern CRITICAL_SECTION console_section;
+extern HANDLE socket_mutex;
+extern DWORD mode;
+extern SOCKET client;
 
 
 DWORD WINAPI RunAcceptingThread(LPVOID lpParam);

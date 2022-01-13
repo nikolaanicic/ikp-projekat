@@ -142,11 +142,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Communication.h" />
+    <ClInclude Include="client_accepting_thread.h" />
+    <ClInclude Include="client_config.h" />
+    <ClInclude Include="client_sending_thread.h" />
+    <ClInclude Include="common.h" />
     <ClInclude Include="random_data.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Communication.cpp" />
+    <ClCompile Include="client_accepting_thread.cpp" />
+    <ClCompile Include="client_config.cpp" />
+    <ClCompile Include="client_sending_thread.cpp" />
+    <ClCompile Include="common.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="random_data.cpp" />
   </ItemGroup>
