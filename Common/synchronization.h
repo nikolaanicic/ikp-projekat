@@ -8,6 +8,8 @@
 HANDLE init_semaphore(int initial_count, int max_count);
 void safe_close_handle(HANDLE handle);
 HANDLE init_mutex();
+HANDLE init_not_owned_mutex();
+
 
 
 

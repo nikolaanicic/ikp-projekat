@@ -8,15 +8,17 @@
 #include "server_main_thread.h"
 #include "comms_interface.h"
 #include "synchronization.h"
+#include "request_worker.h"
 
 #define MAX_CONNECTIONS (10)
+#define WORKER_NUM (5)
 // pet klijentata i pet worker threadova sa drugog servera
 
 
-bool init_server(SOCKADDR_IN address);
-void run_server();
-void stop_server();
-unsigned short get_server_port();
+SOCKADDR_IN server_starter();
+void safe_close_server();
+void allocate_resources();
+
 
 
 

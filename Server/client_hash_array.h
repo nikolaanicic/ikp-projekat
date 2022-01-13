@@ -3,18 +3,20 @@
 
 #include "data_model.h"
 #include <WinSock2.h>
+#include "synchronization.h"
 
 
 typedef struct _hash_array_node_
 {
 	SOCKET socket;
+	HANDLE client_mutex;
+	HANDLE FullSemaphore;
+	HANDLE EmptySemaphore;
 }HASH_NODE;
 
 #define HASH_ARRAY_LEN (7)
 
-void init_hash_array(HASH_NODE client_array[]);
-void set_hash_node(TYPE type, HASH_NODE node,HASH_NODE client_array[]);
-HASH_NODE get_hash_node(TYPE type,HASH_NODE client_array[]);
+bool init_hash_node(HASH_NODE* node);
 int map_type_to_index(TYPE type);
 
 

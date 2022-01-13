@@ -2,28 +2,28 @@
 
 
 
+/*
+	Ova funkcija mapira tip reda na cvor u nizu po modulu HASH_ARRAY_LEN ( 7 )
+	
+	Svaki red ima svoj cvor i u njemu se nalaze klijentski socket koji je povezan na taj red i semafori 
+	koji upravljaju koriscenjem samog reda
+
+*/
+
 int map_type_to_index(TYPE type)
 {
 	return type % HASH_ARRAY_LEN;
 }
 
-void init_hash_array(HASH_NODE client_array[])
+bool init_hash_node(HASH_NODE* node)
 {
-	for (int i = 0; i < HASH_ARRAY_LEN; i++)
-	{
-		client_array[i].socket = INVALID_SOCKET;
-	}
-}
+	if (node == NULL)
+		return false;
 
-void set_hash_node(TYPE type, HASH_NODE node,HASH_NODE client_array[])
-{
-	int index = map_type_to_index(type);
-	memcpy(&client_array[index], &node, sizeof(HASH_NODE));
-	
-}
+	node->client_mutex = init_not_owned_mutex();
+	node->FullSemaphore = init_semaphore(0, 1);
+	node->EmptySemaphore = init_semaphore(1, 1);
+	node->socket = INVALID_SOCKET;
 
-HASH_NODE get_hash_node(TYPE type,HASH_NODE client_array[])
-{
-	int index = map_type_to_index(type);
-	return client_array[index];
+	return node->client_mutex != NULL;
 }

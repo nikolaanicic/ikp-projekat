@@ -9,7 +9,6 @@
 #include "client_hash_array.h"
 #include "server_common.h"
 
-extern SOCKET listen_socket;
 
 DWORD WINAPI load_balancer(LPVOID lpParam);
 

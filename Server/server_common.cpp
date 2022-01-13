@@ -1,12 +1,22 @@
 #include "server_common.h"
 
-HANDLE FinishSignal;
+Node* queue_heads[HASH_ARRAY_LEN];
+HANDLE queue_mutexes[HASH_ARRAY_LEN];
+Node* main_queue;
+HANDLE main_queue_mutex;
 HASH_NODE client_hash_array[HASH_ARRAY_LEN];
-Node* server_queue_head;
-HANDLE server_queue_mutex;
-HANDLE client_hash_array_mutex[HASH_ARRAY_LEN];
+SOCKET listen_socket;
+HANDLE FinishSignal;
 
 
+HANDLE MainFullSemaphore;
+HANDLE MainEmptySemaphore;
+
+
+/*
+	ova funkcija postavlja soket u neblokirajuci mod rada
+
+*/
 bool set_non_blocking_mode(SOCKET socket)
 {
 	unsigned long mode = 1;

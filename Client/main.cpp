@@ -46,7 +46,7 @@ int main()
 
 	InitializeCriticalSection(&console_section);
 	FinishSignal = init_semaphore(0, 2);
-	socket_mutex = init_mutex();
+	socket_mutex = init_not_owned_mutex();
 
 	sending_thread = CreateThread(NULL, 0, &RunSendingThread, (LPVOID)&data_type, 0, &sending_thread_id);
 	receiving_thread = CreateThread(NULL, 0, &RunAcceptingThread, (LPVOID)NULL, 0, &receiving_thread_id);

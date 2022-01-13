@@ -20,13 +20,29 @@ void handle_client_connect_error()
 	exit(-5);
 }
 
+
+/*
+
+	Ova funkcija povezuje klijenta na red na serveru, odnosno uzima od korisnika server na koji treba povezati klijenta
+	pravi adresu servera i povezuje klijenta na adresu, ako je tcp vez prihvacena salje blokirajucu config poruku ka serveru sa komandom 
+	CONNECT i zeljenim redom i ceka odgovor servera
+
+	Agument:
+		queueName -> red na koji treba povezati klijenta
+
+	Povratna vrednost:
+		Ako je ostvarena uspesna veza sa redom na serveru onda vraca SOCKET inace vraca SOCKET_ERROR
+*/
+
 SOCKET Connect(const char* queueName)
 {
 	SOCKET client = init_socket();
 	SOCKADDR_IN server_address;
 
-	populateAddressV4(&server_address, SERVER_IP, SERVER_PORT_1);
-	connect_to_address(client, server_address, &handle_client_connect_error);
+	unsigned int server_port = get_server_port();
+
+	populateAddressV4(&server_address, SERVER_IP, server_port);
+	connect_to_address(client, server_address);
 
 
 
@@ -38,7 +54,7 @@ SOCKET Connect(const char* queueName)
 	if (state == FAULT)
 	{
 		handle_client_connect_error();
-		free_message(message);
+		free_message(&message);
 		close_socket(client);
 		return SOCKET_ERROR;
 	}
@@ -51,7 +67,7 @@ SOCKET Connect(const char* queueName)
 	if (state == FAULT)
 	{
 		printf("\nFailed to connect to server queue:%s", queueName);
-		free_message(message);
+		free_message(&message);
 		close_socket(client);
 		return SOCKET_ERROR;
 	}
@@ -59,6 +75,16 @@ SOCKET Connect(const char* queueName)
 	return client;
 }
 
+/*
+	Proverava da li na drugom serveru postoji klijent koji je povezan na red
+
+	Argument:
+		queueName -> ime reda za koji treba proveriti postojanje klijenta
+
+	Povratna vrednost:
+		true/false 
+
+*/
 bool Exist(const char* queueName)
 {
 	MESSAGE* message = make_message_config(map_queue_name_to_type(queueName),_DOES_EXIST_,_SERVER_,_SERVER_);
@@ -69,7 +95,7 @@ bool Exist(const char* queueName)
 	if (state == FAULT)
 	{
 		printf("\nFailed to send EXIST message");
-		free_message(message);
+		free_message(&message);
 
 		return false;
 	}
@@ -81,42 +107,35 @@ bool Exist(const char* queueName)
 	if (state == FAULT)
 	{
 		printf("\nFailed to receive message");
-		free_message(message);
+		free_message(&message);
 		return false;
 	}
 
 	print_message(*message);
-	free_message(message);
+	free_message(&message);
 	
 	return true;
 }
 
 
-bool Send_Message(void* message, TYPE type)
-{
-	MESSAGE* msg = make_message_data(message, type);
-	MESSAGE_STATE state = send_message_tcp(client, *msg);
+/*
+	Ova funkcija zaustavlja klijenta odnosno salje shutdown kroz klijentski socket i zatvara ga
 
-	if (state == FAULT)
-	{
-		printf("\nFAILED TO SEND MESSAGE TO SERVICE");
-		free_message(msg);
-		return false;
-	}
-
-	free_message(msg);
-
-	return true;
-}
-
-
+*/
 void stop_client()
 {
+	shutdown(client, SD_BOTH);
 	if (client != INVALID_SOCKET)
 		close_socket(client);
 }
 
 
+
+/*
+	Ovo je funkcija koja predstavlja prijemni thread klijenta, thread se budi na svaku sekundu.
+	Kada se probudi pokusava da primi poruku na klijentskom socketu i da je ispise na ekran
+	Thread se zavrsava sa signaliziranjem FinishSignal semafora odnosno kada korisnik pritisne ENTER
+*/
 DWORD WINAPI RunAcceptingThread(LPVOID lpParam)
 {
 	MESSAGE* message = allocate_message();
@@ -127,7 +146,7 @@ DWORD WINAPI RunAcceptingThread(LPVOID lpParam)
 		state = receive_message_tcp(client, message);
 		if (state == DISCONNECT || state == FAULT)
 		{
-			free_message(message);
+			free_message(&message);
 			while (WaitForSingleObject(socket_mutex, INFINITE) != WAIT_OBJECT_0);
 			stop_client();
 			ReleaseSemaphore(FinishSignal, 2, NULL);
@@ -142,12 +161,20 @@ DWORD WINAPI RunAcceptingThread(LPVOID lpParam)
 	
 	}
 
-	free_message(message);
+	free_message(&message);
 
 	return 0;
 }
 
 
+/*
+	Ova funkcija predstavlja klijentski thread koji salje poruke, vreme na koje se thread budi je promenljivo, odnosno korisnik ga unosi sa tastature
+	Vremenom budjenja ovog threada odredjuje se optrecenje celog sistema sto predstavlja i stress test kada je vreme budjenja malo
+
+	Ovaj thread generise random podatak u zavisnosi od prosledjenog mu tipa
+	i salje ga ka serveru kroz klijentski socket
+
+*/
 DWORD WINAPI RunSendingThread(LPVOID lpParam)
 {
 	TYPE type = *(TYPE*)lpParam;
@@ -156,7 +183,7 @@ DWORD WINAPI RunSendingThread(LPVOID lpParam)
 	MESSAGE_STATE state = FAULT;
 	printf("\nStarted client sending thread");
 	
-	while (WaitForSingleObject(FinishSignal, 5000) != WAIT_OBJECT_0)
+	while (WaitForSingleObject(FinishSignal, 100) != WAIT_OBJECT_0)
 	{
 		void* random_data = get_random_data(type);
 		message = make_message_data(random_data, type);
@@ -169,17 +196,17 @@ DWORD WINAPI RunSendingThread(LPVOID lpParam)
 		{
 			ReleaseMutex(socket_mutex);
 			ReleaseSemaphore(FinishSignal, 1, NULL);
-			free_void_buffer(random_data);
-			free_message(message);
+			free_void_buffer(&random_data);
+			free_message(&message);
 			
 			return 0;
 		}
 
 		ReleaseMutex(socket_mutex);
-		free_void_buffer(random_data);
+		free_void_buffer(&random_data);
 	}
 
-	free_message(message);
+	free_message(&message);
 
 	return 0;
 }

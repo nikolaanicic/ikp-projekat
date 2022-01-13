@@ -5,5 +5,5 @@
 #define RAND_BUFFER_SIZE (8)
 
 void* get_random_data(TYPE type);
-void free_void_buffer(void* buffer);
+void free_void_buffer(void** buffer);
 #endif

@@ -1,6 +1,12 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "data_model.h"
 
+
+
+// Ova funkcija ispisuje sve karaktere koji se nalaze u baferu do odredjene duzine
+// Koriscena je u debagovanju projekta
+// Nema povratnu vrednost
+
 void print_buffer(char* buffer, int buffer_len)
 {
 	if (buffer == NULL || buffer_len <= 0)
@@ -11,6 +17,10 @@ void print_buffer(char* buffer, int buffer_len)
 		printf("%c", buffer[i]);
 	}
 }
+
+// Ova funkcija ispisuje data deo unije u strukturi poruke
+// Koristi se pri ispisivanju poruke kada se pronadje da je deo podataka popunjen
+// Nema povratnu vrednost
 
 void print_data(DATA data, TYPE type)
 {
@@ -26,6 +36,10 @@ void print_data(DATA data, TYPE type)
 	}
 }
 
+// Ova funkcija ispisuje komande odosno pravi mapiranje izmedju komandi na njihove const char*(string) vrednosti
+// Nema povratnu vrednost
+// Koristi se pri ispisu poruke kada je deo sa komandom popunjen
+
 void print_command(COMMAND command)
 {
 	printf("\nCOMMAND:");
@@ -39,6 +53,10 @@ void print_command(COMMAND command)
 	}
 }
 
+// Ova funkcija ispisuje lokaciju (izvoriste/odrediste) iz poruke, stvara mapiranje izmedju tipa LOCATION i string vrednosti vezane
+// za konkretnu vrednost tipa LOCATION
+// Nema povratnu vrednost
+
 void print_location(LOCATION location)
 {
 	switch (location)
@@ -47,6 +65,10 @@ void print_location(LOCATION location)
 	case _SERVER_: printf("SERVER"); break;
 	}
 }
+
+// Ova funkcija ispisuje tip podataka koji se moze naci u poruci
+// Stvara mapiranje izmedju tipa TYPE i string vrednosti vezanih za taj tip
+// Nema povratnu vrednost
 
 void print_type(TYPE type)
 {
@@ -61,15 +83,31 @@ void print_type(TYPE type)
 	}
 }
 
+
+// Ova funkcija ispisuje deo sa podatkom u uniji strukture poruke kada je on popunjen
+// Sluzi kao wrapper oko funkcija print_data
+// Nema povratnu vrednost
+
 void print_data_message(DATA_MESSAGE message)
 {
 	print_data(message.data, message.type);
 }
 
+
+// Wrapper oko funkcije print_command
+// Nema povratnu vrednost
+
 void print_config_message(CONFIG_MESSAGE message)
 {
 	print_command(message.command);
 }
+
+
+// Ova funkcija pronalazi koji deo poruke je popunjen i na osnovu toga poziva odgovarajucu funkciju za ispis
+// INNER_MESSAGE je unija koja sadrzi ili podatak ili komandu
+// FILLED_STRUCTURE je polje koje naznacava koji deo unije je popunjen
+// Nema povratnu vrednost
+
 
 void print_inner_message(INNER_MESSAGE message, FILLED_STRUCTURE has_data)
 {
@@ -79,6 +117,11 @@ void print_inner_message(INNER_MESSAGE message, FILLED_STRUCTURE has_data)
 		case _DATA_: print_data_message(message.data); break;
 	}
 }
+
+
+// Ova funkcija ispisuje celu poruku odnosno sve njene uvek popunjene delove i svaki popunjen deo iz unija koja se mogu naci u poruci
+// message je poruka koju treba ispisati
+// Nema povratnu vrednost
 
 void print_message(MESSAGE message)
 {
@@ -92,10 +135,10 @@ void print_message(MESSAGE message)
 
 }
 
-void handle_no_memory_buffer()
-{
-	printf("\nNo memory to allocate new message buffer");
-}
+// Ova funkcija alocira char bafer zeljene velicine
+// size je velicina bloka koju treba alocirati
+// povratna vrednost je ili pokazivac na blok ako je alociranje uspesno ili NULL ako je neuspesno
+// pri neuspesnom alociranju ispisuje se poruka radi debagovanja
 
 char* allocate_buffer(int size)
 {
@@ -103,20 +146,27 @@ char* allocate_buffer(int size)
 
 	if (buffer == NULL)
 	{
-		handle_no_memory_buffer();
+		printf("\nNo memory to allocate new message buffer");
 	}
 
 	return buffer;
 }
 
-void free_buffer(char* buffer)
+
+// Ova funkcija oslobadja char bafer
+void free_buffer(char** buffer)
 {
-	if (buffer != NULL)
+	if (*buffer != NULL)
 	{
-		free(buffer);
-		buffer = NULL;
+		free(*buffer);
+		*buffer = NULL;
 	}
 }
+
+
+// Ova funkcija alocira blok memorije koji moze da drzi tacno jednu poruku
+// Povratna vrednost je ili pokazivac na blok memorije za poruku ili NULL ako je alokacija neuspesna
+// Ima ispis pri neuspesnoj alokaciji zbog debagovanja
 
 MESSAGE* allocate_message()
 {
@@ -129,6 +179,10 @@ MESSAGE* allocate_message()
 
 	return message;
 }
+
+
+// Ova funcija mapira TYPE na string predstavu konkretne vrednosti
+// _CHAR_ -> "char" itd...
 
 const char* map_type_to_queue_name(TYPE type)
 {
@@ -143,6 +197,13 @@ const char* map_type_to_queue_name(TYPE type)
 	}
 }
 
+
+/*
+	Serijalizuje poruku u void* bafer koji se salje kroz mrezu
+	
+	Povratna vrednost ukazuje na tacnost prosledjenih parametara
+	
+*/
 bool serialize_message(void* buffer, MESSAGE message)
 {
 	if (buffer == NULL)
@@ -153,6 +214,13 @@ bool serialize_message(void* buffer, MESSAGE message)
 	return true;
 }
 
+
+/*
+	Deserijalizuje poruku iz void* bafer u MESSAGE*
+	Povratna vrednost ukazuje na tacnost prosledjenih parametara
+	
+	
+*/
 bool deserialize_message(void* buffer, MESSAGE* message)
 {
 	if (buffer == NULL || message == NULL)
@@ -162,6 +230,19 @@ bool deserialize_message(void* buffer, MESSAGE* message)
 	return true;
 }
 
+
+
+/*
+	Ova funkcija popunjava deo unije podataka sa random generisanim podatkom
+	
+	Argumenti:
+		type -> polje unije koje treba popuniti, odnosno u sta treba kastovati random generisani podatak
+		data -> 'random' generisani bajtovi podataka koje treba kastovati
+		d -> pokazivac na uniju cije polje treba popuniti
+
+	Povratna vrednost ukazuje na validnost prosledjenih parametara
+
+*/
 bool populate_data(DATA* d, TYPE type, void* data)
 {
 	if (d == NULL || data == NULL)
@@ -208,6 +289,13 @@ bool populate_data(DATA* d, TYPE type, void* data)
 	return true;
 }
 
+
+/*
+	Ova funkcija popunjava config deo poruke proslednjenom komandom
+
+	Povratna vrednost ukazuje na validnost pokazivaca
+
+*/
 bool populate_config_message(CONFIG_MESSAGE* message, COMMAND command)
 {
 	if (message == NULL)
@@ -219,6 +307,14 @@ bool populate_config_message(CONFIG_MESSAGE* message, COMMAND command)
 	return true;
 }
 
+/*
+	Ova funkcija popunjava strukturu koja drzi uniju podataka i tip koji pokazuje koje polje je popunjeno unutar unije
+	Poziva populate_data metodu sa prosledjenim parametrima
+
+	Povratna vrednost pokazuje validnost podtaka i ispravnost popunjavanja unije
+
+*/
+
 bool populate_data_message(DATA_MESSAGE* message, TYPE type, void* data)
 {
 	if (message == NULL || data == NULL)
@@ -229,6 +325,16 @@ bool populate_data_message(DATA_MESSAGE* message, TYPE type, void* data)
 
 	return retval;
 }
+
+/*
+	Ova funkcija popunjava uniju viseg nivoa odnosno pakuje ili podatke ili komadnu
+
+	Argumenti:
+		message-> pokazivac na uniju koja se popunjava
+		has_data -> polje unije koje treba popuniti
+		data-> podatak ili komanda koje treba ubaciti u uniju
+
+*/
 
 bool populate_inner_message(INNER_MESSAGE* message, void* data, FILLED_STRUCTURE has_data)
 {
@@ -252,6 +358,16 @@ bool populate_inner_message(INNER_MESSAGE* message, void* data, FILLED_STRUCTURE
 	return true;
 }
 
+
+/*
+	Mapira ime reda na TYPE 
+
+	Aegument:
+		queue_name -> ime reda: "char", "int", "float", "double", "short"
+
+	Povratna vrednost:
+		TYPE na koji se ime reda mapiralo: _CHAR_, _INT_, _FLOAT_, _DOUBLE_, _SHORT_
+*/
 TYPE map_queue_name_to_type(const char* queue_name)
 {
 	char c = queue_name[0];
@@ -260,46 +376,84 @@ TYPE map_queue_name_to_type(const char* queue_name)
 
 }
 
+
+/*
+	Ova funkcija sluzi kao fasada koju korisnici biblioteke pozivaju kako bi napravili poruku u kojoj je popunjen deo unije koji drzi podtake
+
+	Aegumenti:
+		data -> pokazivac na podatak koji treba ubaciti u poruku
+		type -> tip podatka koji treba popuniti
+
+	Povratna vrednost:
+		pokazivac na popunjenu poruku ili NULL
+
+*/
+
 MESSAGE* make_message_data(void* data, TYPE type)
 {
 	MESSAGE* message = allocate_message();
+	if (message != NULL)
+	{
+		DATA_MESSAGE data_message;
+		populate_data_message(&data_message, type, data);
+		populate_inner_message(&(message->data), (void*)&data_message, _DATA_);
 
-	DATA_MESSAGE data_message;
-	populate_data_message(&data_message, type, data);
-	populate_inner_message(&(message->data), (void*)&data_message, _DATA_);
-
-	message->destination = _CLIENT_;
-	message->has_data = _DATA_;
-	message->origin = _CLIENT_;
+		message->destination = _CLIENT_;
+		message->has_data = _DATA_;
+		message->origin = _CLIENT_;
 
 
-	strcpy_s(message->queueName, map_type_to_queue_name(type));
+		strcpy_s(message->queueName, map_type_to_queue_name(type));
+	}
 	return message;
 }
 
+
+/*
+	Ova funkcija sluzi kao fasada koju korisnici biblioteke pozivaju kako bi popunili deo unije koji sadrzi komandu
+
+	Argumenti:
+		queueName -> tip reda za koji je poruka namenjena
+		command -> komanda koja se salje
+		origin -> izvoriste poruke
+		destination -> odrediste poruke
+
+	Povratna vrednost:
+		pokazivac na popunjenu poruku ili NULL
+
+*/
 MESSAGE* make_message_config(TYPE queueName, COMMAND command, LOCATION origin, LOCATION destination)
 {
 
 	MESSAGE* message = allocate_message();
-	CONFIG_MESSAGE config_message;
-	populate_config_message(&config_message, command);
-	populate_inner_message(&(message->data), (void*)(&config_message), _CONFIG_);
+	if (message != NULL)
+	{
 
-	message->has_data = _CONFIG_;
-	message->destination = destination;
-	message->origin = origin;
+		CONFIG_MESSAGE config_message;
+		populate_config_message(&config_message, command);
+		populate_inner_message(&(message->data), (void*)(&config_message), _CONFIG_);
 
-	strcpy(message->queueName, map_type_to_queue_name(queueName));
+		message->has_data = _CONFIG_;
+		message->destination = destination;
+		message->origin = origin;
 
+		strcpy(message->queueName, map_type_to_queue_name(queueName));
 
+	}
 	return message;
 }
 
-void free_message(MESSAGE* message)
+
+/*
+	Ova funkcija oslobadja blok memorije koji je bio zauzet za poruku/ niz poruka
+
+	Nema povratnu vrednost
+*/
+void free_message(MESSAGE** message)
 {
-	if (message != NULL)
+	if (*message != NULL)
 	{
-		free(message);
-		message = NULL;
+		free(*message);
+		*message = NULL;
 	}
 }

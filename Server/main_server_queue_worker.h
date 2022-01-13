@@ -3,5 +3,8 @@
 
 #include "server_common.h"
 #include <Windows.h>
+#include "queue.h"
+
+DWORD WINAPI PopMessageThread(LPVOID lpParam);
 
 #endif

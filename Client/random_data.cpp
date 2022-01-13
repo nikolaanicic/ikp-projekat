@@ -1,6 +1,10 @@
 #include "random_data.h"
 
 
+/*
+	Ova funkcija generise random char bafer dugacak osam bajta
+
+*/
 char* generateRandomData()
 {
 	int l = rand();
@@ -14,42 +18,75 @@ char* generateRandomData()
 	return buffer;
 }
 
-
-void free_void_buffer(void* buffer)
+/*
+	Ova funkcija oslobadja void pokazivac na blok memorije
+*/
+void free_void_buffer(void** buffer)
 {
-	if (buffer != NULL)
+	if (*buffer != NULL)
 	{
-		free(buffer);
-		buffer = NULL;
+		free(*buffer);
+		*buffer = NULL;
 	}
 }
 
+
+/*
+	Ova funkcija iz generisanog random bafera koji se sastoji od 8 bajtova odnosno od dva inta
+	uzima jedan od dva inta koji se nalaze u baferu
+
+	Povratna vrednost:
+		random generisan integer
+*/
 int get_random_int(char* buffer)
 {
 	return ((int*)buffer)[rand() % (RAND_BUFFER_SIZE / sizeof(int))];
 }
 
+/*
+	Ova funkcija iz random bafera uzima jedan od charova
+*/
 char get_random_char(char* buffer)
 {
 	return buffer[rand() % RAND_BUFFER_SIZE];
 }
 
+
+/*
+	Ova funkcija iz random bafera uzima jedan od 4 shorta
+*/
 short get_random_short(char* buffer)
 {
 	return ((short*)buffer)[rand() % (RAND_BUFFER_SIZE / sizeof(short))];
 }
 
+
+/*
+	Ova funkcija iz random bafera uzima jedan od 2 floata
+*/
 float get_random_float(char* buffer)
 {
 	return ((float*)buffer)[rand() % (RAND_BUFFER_SIZE / sizeof(float))];
 }
 
+
+
+/*
+	Ova funkcija kastuje citav random bafer u double i vraca vrednost koja se nalazi u njemu
+
+*/
 double get_random_double(char* buffer)
 {
 	return *((double*)buffer);
 }
 
 
+/*
+	Ova funkcija alocira void bafera odredjene duzine
+
+	Povratna vrednost:
+		Pokazivac na blok zauzete memorije ili NULL
+*/
 void* allocate_void_buffer(int size)
 {
 	void* buffer = malloc(size);
@@ -63,7 +100,17 @@ void* allocate_void_buffer(int size)
 }
 
 
+/*
+	Ova funkcija generise random podatak zeljenog tipa i serijalizuje ga u void bafer
+	Void bafer se kasnije koristi za pravljenje poruke
 
+	Agument:
+		type -> tip podatka koji treba generisati
+
+	Povratna vrednost:
+		void bafer popunjen random generisanim podatkom zeljenog tipa
+	
+*/
 void* get_random_data(TYPE type)
 {
 	char* random_buffer = generateRandomData();
@@ -107,6 +154,6 @@ void* get_random_data(TYPE type)
 	}
 	}
 
-	free_buffer(random_buffer);
+	free_buffer(&random_buffer);
 	return data_buffer;
 }
