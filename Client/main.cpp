@@ -59,7 +59,7 @@ int main()
 	}
 
 	printf("\nPress [Enter] to stop the client:");
-	_getch();
+	while (WaitForSingleObject(FinishSignal, INFINITE) != WAIT_OBJECT_0);
 
 	ReleaseSemaphore(FinishSignal, 2, NULL);
 

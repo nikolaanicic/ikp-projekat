@@ -8,6 +8,11 @@ extern HANDLE FinishSignal;
 extern CRITICAL_SECTION console_section;
 extern HANDLE socket_mutex;
 
+
+#define STRESS_TEST_PERIOD (10)
+
+enum WORK_MODE { _MENU_=1, _STRESS_TEST_=2 };
+
 #pragma region INTERFACE
 
 extern SOCKET client;
@@ -166,10 +171,174 @@ DWORD WINAPI RunAcceptingThread(LPVOID lpParam)
 	return 0;
 }
 
+DWORD get_waiting_period(bool stress_test = false)
+{
+	DWORD retval = -1;
 
+	if (!stress_test)
+	{
+		do
+		{
+			EnterCriticalSection(&console_section);
+			printf("\nUnesite period [ >= 0 ] ms na koji ce klijent slati poruke:");
+			scanf_s("%d", &retval);
+			LeaveCriticalSection(&console_section);
+
+
+		}while(retval <= 0);
+	}
+	else
+	{
+		retval = STRESS_TEST_PERIOD;
+	}
+
+	return retval;
+}
+
+
+
+WORK_MODE get_work_mode()
+{
+	int work_mode = -1;
+
+	do
+	{
+		EnterCriticalSection(&console_section);
+		printf("\n1.Menu");
+		printf("\n2.Stress test");
+		printf("\n");
+		LeaveCriticalSection(&console_section);
+		scanf_s("%d", &work_mode);
+		
+		if (work_mode != (int)_MENU_ && work_mode != _STRESS_TEST_)
+		{
+			work_mode = -1;
+		}
+
+	} while (work_mode == -1);
+
+	return (WORK_MODE)work_mode;
+}
+
+
+
+int get_menu_option()
+{
+
+	int option = -1;
+
+	do
+	{
+		EnterCriticalSection(&console_section);
+		printf("\n1.Send random message");
+		printf("\n2.Send does exist message");
+		LeaveCriticalSection(&console_section);
+		scanf_s("%d", &option);
+
+		if (option != 1 && option != 2)
+		{
+			option = -1;
+		}
+
+	} while (option == -1);
+
+	return option;
+}
+
+
+
+int stress_test_mode(TYPE type, DWORD period)
+{
+	MESSAGE* message = NULL;
+	MESSAGE_STATE state;
+	while (WaitForSingleObject(FinishSignal, period) != WAIT_OBJECT_0)
+	{
+		void* random_data = get_random_data(type);
+		message = make_message_data(random_data, type);
+
+		while (WaitForSingleObject(socket_mutex, INFINITE) != WAIT_OBJECT_0);
+
+		state = send_message_tcp(client, *message);
+
+		if (state == FAULT)
+		{
+			ReleaseMutex(socket_mutex);
+			ReleaseSemaphore(FinishSignal, 1, NULL);
+			free_void_buffer(&random_data);
+			free_message(&message);
+
+			return 0;
+		}
+
+		ReleaseMutex(socket_mutex);
+		free_void_buffer(&random_data);
+	}
+
+	free_message(&message);
+
+	return 0;
+}
+
+
+MESSAGE* get_optioned_message(int option,TYPE type)
+{
+	MESSAGE* message = NULL;
+	void* random_data = NULL;
+	switch (option)
+	{
+	case 1:
+		random_data = get_random_data(type);
+		message = make_message_data(random_data, type);
+		break;
+	case 2:
+		message = make_message_config(type, _DOES_EXIST_, _CLIENT_, _SERVER_);
+		break;
+
+	case 3:
+		ReleaseSemaphore(FinishSignal, 3, NULL);
+		free_void_buffer(&random_data);
+		return NULL;
+	}
+
+	
+	free_void_buffer(&random_data);
+	return message;
+}
+
+int menu_mode(TYPE type)
+{
+	MESSAGE* message = NULL;
+	MESSAGE_STATE state;
+	while (WaitForSingleObject(FinishSignal, 500) != WAIT_OBJECT_0)
+	{
+		message = get_optioned_message(get_menu_option(), type);
+
+		while (WaitForSingleObject(socket_mutex, INFINITE) != WAIT_OBJECT_0);
+
+		state = send_message_tcp(client, *message);
+
+		if (state == FAULT)
+		{
+			ReleaseMutex(socket_mutex);
+			ReleaseSemaphore(FinishSignal, 1, NULL);
+			free_message(&message);
+
+			return 0;
+		}
+		ReleaseMutex(socket_mutex);
+	}
+	free_message(&message);
+
+	return 0;
+}
 /*
 	Ova funkcija predstavlja klijentski thread koji salje poruke, vreme na koje se thread budi je promenljivo, odnosno korisnik ga unosi sa tastature
-	Vremenom budjenja ovog threada odredjuje se optrecenje celog sistema sto predstavlja i stress test kada je vreme budjenja malo
+	Vremenom budjenja ovog threada odredjuje se opterecenje celog sistema sto predstavlja i stress test kada je vreme budjenja malo
+
+	Moguci modovi rada su MENU, STRESS_TEST
+
+	U MENU modu rada korisik kontrolise rad klijentskog programa, kada se odabere STRESS_TEST opcija
+	klijent automatski generise i salje poruke u jako malom razmaku
 
 	Ovaj thread generise random podatak u zavisnosi od prosledjenog mu tipa
 	i salje ga ka serveru kroz klijentski socket
@@ -179,34 +348,21 @@ DWORD WINAPI RunSendingThread(LPVOID lpParam)
 {
 	TYPE type = *(TYPE*)lpParam;
 
-	MESSAGE* message = allocate_message();
 	MESSAGE_STATE state = FAULT;
+
 	printf("\nStarted client sending thread");
-	
-	while (WaitForSingleObject(FinishSignal, 100) != WAIT_OBJECT_0)
+
+	WORK_MODE mode = get_work_mode();
+
+	if (mode == _STRESS_TEST_)
 	{
-		void* random_data = get_random_data(type);
-		message = make_message_data(random_data, type);
-
-		while (WaitForSingleObject(socket_mutex, INFINITE) != WAIT_OBJECT_0);
-		
-		state = send_message_tcp(client, *message);
-
-		if (state == FAULT)
-		{
-			ReleaseMutex(socket_mutex);
-			ReleaseSemaphore(FinishSignal, 1, NULL);
-			free_void_buffer(&random_data);
-			free_message(&message);
-			
-			return 0;
-		}
-
-		ReleaseMutex(socket_mutex);
-		free_void_buffer(&random_data);
+		DWORD period = get_waiting_period(true);
+		return stress_test_mode(type, period);
 	}
-
-	free_message(&message);
+	else if (mode == _MENU_)
+	{
+		return menu_mode(type);
+	}
 
 	return 0;
 }

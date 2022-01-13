@@ -7,9 +7,7 @@
 #include "data_model.h"
 
 extern Node* queue_heads[HASH_ARRAY_LEN];
-extern HANDLE queue_mutexes[HASH_ARRAY_LEN];
 extern Node* main_queue;
-extern HANDLE main_queue_mutex;
 extern HASH_NODE client_hash_array[HASH_ARRAY_LEN];
 extern HANDLE FinishSignal;
 extern SOCKET listen_socket;

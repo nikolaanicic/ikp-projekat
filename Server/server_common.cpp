@@ -1,9 +1,7 @@
 #include "server_common.h"
 
 Node* queue_heads[HASH_ARRAY_LEN];
-HANDLE queue_mutexes[HASH_ARRAY_LEN];
 Node* main_queue;
-HANDLE main_queue_mutex;
 HASH_NODE client_hash_array[HASH_ARRAY_LEN];
 SOCKET listen_socket;
 HANDLE FinishSignal;

@@ -34,35 +34,14 @@ void safe_close_server()
 {
 	ReleaseSemaphore(FinishSignal, 7, NULL);
 	safe_close_handle(FinishSignal);
-	destory_handle_array(queue_mutexes,	HASH_ARRAY_LEN);
 	destory_queues();
 	close_socket(listen_socket);
-	safe_close_handle(main_queue_mutex);
 	close_winsock();
 	exit(0);
 }
 
 
-/*
-	ova funkcija inicijalizuje sve mutexe za redove podataka
 
-*/
-bool init_queue_mutexes()
-{
-	bool retval = true;
-	for (int i = 0; i < HASH_ARRAY_LEN; i++)
-	{
-		queue_mutexes[i] = init_mutex();
-		if (!queue_mutexes[i])
-		{
-			destory_handle_array(queue_mutexes,i);
-			retval = false;
-			break;
-		}
-	}
-
-	return retval;
-}
 
 /*
 	Ova funkcija inicijalizuje sve redove podataka
@@ -104,13 +83,9 @@ void allocate_resources()
 {
 	init_queues();
 	init_queue(&main_queue);
-	if (!init_queue_mutexes())
-	{
-		safe_close_server();
-		exit(-112);
-	}
 
-	if (((main_queue_mutex = init_mutex()) == NULL) || ((FinishSignal = init_semaphore(0, WORKER_NUM + 2)) == NULL))
+
+	if (((FinishSignal = init_semaphore(0, WORKER_NUM + 2)) == NULL))
 	{
 		safe_close_server();
 	}
