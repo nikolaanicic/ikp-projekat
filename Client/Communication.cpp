@@ -232,10 +232,11 @@ int get_menu_option()
 		EnterCriticalSection(&console_section);
 		printf("\n1.Send random message");
 		printf("\n2.Send does exist message");
+		printf("\n3.Ugasi klijenta");
 		LeaveCriticalSection(&console_section);
 		scanf_s("%d", &option);
 
-		if (option != 1 && option != 2)
+		if (option != 1 && option != 2 && option != 3)
 		{
 			option = -1;
 		}
@@ -314,8 +315,10 @@ int menu_mode(TYPE type)
 		message = get_optioned_message(get_menu_option(), type);
 
 		while (WaitForSingleObject(socket_mutex, INFINITE) != WAIT_OBJECT_0);
-
-		state = send_message_tcp(client, *message);
+		if (message != NULL)
+			state = send_message_tcp(client, *message);
+		else
+			state = FAULT;
 
 		if (state == FAULT)
 		{
