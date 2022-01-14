@@ -52,9 +52,10 @@ int stress_test_mode(TYPE type, DWORD period)
 
 		ReleaseMutex(socket_mutex);
 		free_void_buffer(&random_data);
+		free_message(&message);
+		message = NULL;
 	}
 
-	free_message(&message);
 
 	return 0;
 }
@@ -108,8 +109,9 @@ int menu_mode(TYPE type)
 			return 0;
 		}
 		ReleaseMutex(socket_mutex);
+		free_message(&message);
+		message = NULL;
 	}
-	free_message(&message);
 
 	return 0;
 }
