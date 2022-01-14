@@ -240,17 +240,21 @@ bool connect_message_handler(MESSAGE* message, TYPE type, SOCKET client_socket)
 	obraditi je kroz isti pipeline kao i klijentsku poruku
 
 */
-void check_brother_server_sockets_events(SOCKET brother_server_sockets[],int length,FD_SET* fds,MESSAGE* buffer)
+void check_brother_server_sockets_events(SOCKET** brother_server_sockets,int length,FD_SET* fds,MESSAGE* buffer)
 {
 	for (int i = 0; i < length; i++)
 	{
-		if (brother_server_sockets[i] != INVALID_SOCKET && FD_ISSET(brother_server_sockets[i], fds))
+		if ((*brother_server_sockets)[i] != INVALID_SOCKET && FD_ISSET((*brother_server_sockets)[i], fds))
 		{
-			MESSAGE_STATE state = receive_message_tcp(brother_server_sockets[i], buffer);
+			MESSAGE_STATE state = receive_message_tcp((*brother_server_sockets)[i], buffer);
 			
 			if (state == SUCCESS)
 			{
 				push_message_to_server_queue(buffer);
+			}
+			else if (state == FAULT || state == DISCONNECT)
+			{
+				(*brother_server_sockets)[i] = INVALID_SOCKET;
 			}
 		}
 	}
@@ -386,7 +390,7 @@ DWORD WINAPI load_balancer(LPVOID lpParam)
 			}
 
 			check_client_sockets_events(&client_sockets,MAX_CONNECTIONS / 2, &readfds, message);
-			check_brother_server_sockets_events(brother_server_sockets, MAX_CONNECTIONS / 2, &readfds, message);
+			check_brother_server_sockets_events(&brother_server_sockets, MAX_CONNECTIONS / 2, &readfds, message);
 		}
 	}
 
